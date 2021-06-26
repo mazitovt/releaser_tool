@@ -1,4 +1,6 @@
 column_names = [
+    "Ключ проблемы",
+    "Идентификатор проблемы",
     "Тип задачи",
     "Статус",
     "Тема",
@@ -11,28 +13,55 @@ column_names = [
 ]
 
 column_index_to_name = {
-    0: "Тип задачи",
-    1: "Статус",
-    2: "Тема",
-    3: "Исправить в версиях",
-    4: "Действия при обновлении",
-    5: "Ссылка на yml",
-    6: "Ветка в Git",
-    7: "Шаблоны отчетов",
-    8: "Объекты в БД",
+    0: "Ключ проблемы",
+    1: "Идентификатор проблемы",
+    2: "Тип задачи",
+    3: "Статус",
+    4: "Тема",
+    5: "Исправить в версиях",
+    6: "Действия при обновлении",
+    7: "Ссылка на yml",
+    8: "Ветка в Git",
+    9: "Шаблоны отчетов",
+    10: "Объекты в БД",
 }
 
 
-def split_param(param):
-    if "\n" in param:
-        return param.split("\n")
-    return [param]
+def better_split_params(params, one_or_none):
+    """
+    Разделяет параметры со всеми случаями разделения (новая строка, пробел, запятая)
+    После разделения убирает пробелы спереди и сзади параметра
+    ПОКА НЕ Проверяет, не забыл ли пользователь разделить параметры
+    Возвращает список
+
+    Parameters
+    ----------
+    params : str
+        Строка параметров (один или несколько) разделенных пробелом, символом новой строки, запятой, запятой с пробелом.
+    one_or_none: bool
+        Строка может содержать один или не содержать параметра.
+    """
+
+    pass
+
+
+def split_params(params):
+    """
+    Разделяет параметры по новой строке
+    Возвращает список
+    """
+
+    if "\n" in params:
+        return [param for param in params.split("\n")]
+    return [params]
 
 
 class JiraTask:
     def __init__(
         self,
         row_number,
+        task_key,
+        task_id,
         task_type,
         status,
         subject,
@@ -45,17 +74,21 @@ class JiraTask:
     ):
         self.row_number = row_number
 
-        self.task_type = split_param(task_type)
-        self.status = split_param(status)
-        self.subject = split_param(subject)
-        self.fix_in_versions = split_param(fix_in_versions)
-        self.update_action = split_param(update_action)
-        self.yml_link = split_param(yml_link)
-        self.git_branch = split_param(git_branch)
-        self.report_template = split_param(report_template)
-        self.db_objects = split_param(db_objects)
+        self.task_key = split_params(task_key)
+        self.task_id = split_params(task_id)
+        self.task_type = split_params(task_type)
+        self.status = split_params(status)
+        self.subject = split_params(subject)
+        self.fix_in_versions = split_params(fix_in_versions)
+        self.update_action = split_params(update_action)
+        self.yml_link = split_params(yml_link)
+        self.git_branch = split_params(git_branch)
+        self.report_template = split_params(report_template)
+        self.db_objects = split_params(db_objects)
 
         self.params = [
+            self.task_key,
+            self.task_id,
             self.task_type,
             self.status,
             self.subject,
@@ -68,10 +101,9 @@ class JiraTask:
         ]
 
     def __str__(self):
-        return str(self.row_number) + " " + ",".join(self.params)
-
-    def print_in_line(self):
-        pass
+        return ", ".join(
+            ["Задача " + str(self.row_number), *self.task_key, *self.subject]
+        )
 
     def print_in_column(self):
         print(100 * "-")
@@ -81,9 +113,7 @@ class JiraTask:
             print(
                 column_names[index]
                 + ": "
-                + (",\n" + (len(column_names[index]) + 2) * " ").join(
-                    self.params[index]
-                )
+                + (',\n' + (len(column_names[index]) + 2) * " ").join(self.params[index])
             )
 
     def empty_params_names(self):
