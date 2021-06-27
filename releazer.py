@@ -4,7 +4,8 @@ import os
 import logging
 import argparse
 
-from jira import JiraTask
+from logger import *
+from jira import *
 
 
 def parse_args():
@@ -17,6 +18,17 @@ def parse_args():
         "--skip_headers",
         action="store_true",
         help="Skip csv file headers",
+    )
+
+    parser.add_argument(
+        "-e",
+        "--empty_columns",
+        action="store_true",
+        help="Show empty columns for each task",
+    )
+
+    parser.add_argument(
+        "-sh", "--show_parsed", action="store_true", help="Show parsed tasks"
     )
 
     return parser.parse_args()
@@ -33,39 +45,41 @@ def read_file(file_name, skip_headers):
         if skip_headers:
             next(reader)
 
-        return [JiraTask(row_num, *line) for row_num, line in enumerate(reader)]
+        return [JiraTask(log_config, row_num, *line) for row_num, line in enumerate(reader)]
 
 
-def print_empty_fields(jira_tasks):
-    print("\nПустые поля в строках:")
-    for jira_task in jira_tasks:
-        print(
-            str(jira_task.row_number) + ": " + ", ".join(jira_task.empty_params_names())
-        )
 
 
-def log():
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-
-    logger.debug()
 
 
 def main():
+
+
     args = parse_args()
     file_path = args.file
     skip_headers = args.skip_headers
+    empty_columns = args.empty_columns
+    show_parsed = args.show_parsed
 
     if not file_exists(file_path):
         print("Ошибка! Такого файла не существует")
         return
 
     jira_tasks = read_file(file_path, skip_headers)
-    print_empty_fields(jira_tasks)
 
-    for jira_task in jira_tasks:
-        jira_task.print_in_column()
+    if empty_columns:
+        print("\nПустые поля в задачах:")
+        for task in jira_tasks:
+            print_empty_fields(task)
+
+    if show_parsed:
+        print("\nВсе поля в задачах:")
+        for task in jira_tasks:
+            print_in_column(task)
 
 
-if __name__ == "__main__":
-    main()
+log_config = load_json(LOG_CONF_FILE_PATH)
+check_log_folder(log_config)
+logger = get_logger(log_config)
+logger.debug('Start app')
+main()
