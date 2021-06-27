@@ -1,9 +1,10 @@
 import os
 import logging
+import logging.config
 import json
 
-LOG_CONF_FILE_PATH = 'logger_conf.json'
-APP_CONF_FILE_PATH = 'app_conf.json'
+LOG_CONF_FILE_PATH = "logger_conf.json"
+APP_CONF_FILE_PATH = "app_conf.json"
 
 
 def check_log_folder(log_config):
@@ -23,9 +24,10 @@ def check_log_folder(log_config):
         if not os.path.isdir(folder):
             os.mkdir(folder)
 
+
 def load_json(json_file_path):
     """Читает данные из json файла"""
-    with open(json_file_path, 'r') as conf_file:
+    with open(json_file_path, "r") as conf_file:
         return json.load(conf_file)
 
 

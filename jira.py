@@ -1,4 +1,4 @@
-import logging.config
+from logger import get_logger
 
 column_names = [
     "Ключ проблемы",
@@ -38,27 +38,27 @@ column_index_to_name = {
 
 
 def better_split_params(params, one_or_none):
-    """
-    Разделяет параметры со всеми случаями разделения (новая строка, пробел, запятая)
-    После разделения убирает пробелы спереди и сзади параметра
-    ПОКА НЕ Проверяет, не забыл ли пользователь разделить параметры
-    Возвращает список
 
-    Parameters
-    ----------
-    params : str
-        Строка параметров (один или несколько) разделенных пробелом, символом новой строки, запятой, запятой с пробелом.
-    one_or_none: bool
-        Строка может содержать один или не содержать параметра.
-    """
-
+    # Разделяет параметры со всеми случаями разделения (новая строка, пробел, запятая).
+    # После разделения убирает пробелы спереди и сзади параметра.
+    # ПОКА НЕ Проверяет, не забыл ли пользователь разделить параметры.
+    # Возвращает список.
+    #
+    # Parameters
+    # ----------
+    # params : str
+    #     Строка параметров (один или несколько) разделенных пробелом, символом новой строки, запятой, запятой с пробелом.
+    # one_or_none: bool
+    #     Строка может содержать один или не содержать параметра.
     pass
 
 
 def split_params(params):
     """
-    Разделяет параметры по новой строке
-    Возвращает список
+    Разделяет параметры и возвращает список
+
+    :param params: строка из параметров через символ новой строки
+    :return:
     """
 
     if "\n" in params:
@@ -79,6 +79,12 @@ def split_params(params):
 
 
 def print_in_column(task):
+    """
+    Распечатать все поля задачи в колонку
+
+    :param task:
+    :return:
+    """
     print(100 * "-")
     print()
     print(f"Номер строки: {task.row_number}")
@@ -91,6 +97,12 @@ def print_in_column(task):
 
 
 def print_empty_fields(task):
+    """
+    Распечатать пустые поля задачи
+
+    :param task:
+    :return:
+    """
     print(
         str(task.row_number)
         + " ("
@@ -103,7 +115,6 @@ def print_empty_fields(task):
 class JiraTask:
     """
     Класс задачи из Jira
-    Конструктору должны поступать 12 параметров в строгом порядке
     """
 
     def __init__(
@@ -122,8 +133,7 @@ class JiraTask:
         report_template,
         db_objects,
     ):
-        logging.config.dictConfig(log_config)
-        self._logger = logging.getLogger(__name__)
+        self._logger = get_logger(log_config)
 
         self.row_number = row_number
 
@@ -165,29 +175,41 @@ class JiraTask:
             self.db_objects_pg,
         ]
 
+        self.check_required_params()
+
     def check_required_params(self):
+        """
+        Проверить обязательные поля на заполенение и записать в лог
+
+        :return:
+        """
         empty_params = self.get_empty_required_params()
 
         if empty_params:
             self._logger.error(
-                f"Строка {self.row_number}, задача {self.task_key}: Нет значений в обязательных полях: {', '.join(empty_params)}"
+                f"Строка {self.row_number}, задача {', '.join(self.task_key)}: Нет значений в обязательных полях: {', '.join(empty_params)}"
             )
 
     def get_empty_required_params(self):
         """
-        Проверить обязательные поля
-        :param self: Задача из Jira
-        :return: Ничего
+        Получить список имен пустых обязательных полей
+
+        :return: список строк
         """
         empty_required_params = []
         if not self.update_action:
             empty_required_params.append("Действия при обновлении")
         if not self.report_template:
             empty_required_params.append("Шаблоны отчетов")
-
         return empty_required_params
 
     def distribute_reports(self, reports):
+        """
+        Распределить шаблоны отчетов по MS и PG
+
+        :param reports: список всех шаблонов отчетов
+        :return: ничего
+        """
         for report in reports:
             if "_pg." in report.lower():
                 self.report_pg.append(report)
@@ -195,6 +217,12 @@ class JiraTask:
                 self.report_ms.append(report)
 
     def distribute_db_object(self, db_object):
+        """
+        Распределить объекты БД по MS И PG
+
+        :param db_object: список всех объектов БД
+        :return: ничего
+        """
         for db_object in db_object:
             if "_pg" in db_object.lower()[-3:]:
                 self.db_objects_pg.append(db_object)
@@ -207,6 +235,11 @@ class JiraTask:
         )
 
     def empty_params_names(self):
+        """
+        Получить список имен пустых полей задачи
+
+        :return: список строк
+        """
         return [
             column_index_to_name[index]
             for index, param in enumerate(self.params)
@@ -214,4 +247,9 @@ class JiraTask:
         ]
 
     def empty_params_indexes(self):
-        return [index for index, param in enumerate(self.params) if param[0] == ""]
+        """
+        Получить список индексов пустых полей задачи
+
+        :return: список чисел
+        """
+        return [index for index, param in enumerate(self.params) if not param]
