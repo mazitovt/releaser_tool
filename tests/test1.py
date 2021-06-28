@@ -1,6 +1,6 @@
 import unittest
 from taskcreator import TaskCreator
-from jira import RepositoryBranch
+from jira_classes.jira import RepositoryBranch
 
 
 class BranchMatcher:
