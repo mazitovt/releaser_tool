@@ -204,6 +204,12 @@ class TestTaskCreator(unittest.TestCase):
                 )
             ],
         ),
+        (
+            ["", "/-/tree/PROMEDWEB-51417", ""],
+            [
+               Exception
+            ],
+        ),
     )
 
     def test_get_task_name(self):
@@ -216,6 +222,8 @@ class TestTaskCreator(unittest.TestCase):
                     TaskCreator._get_task_name(test_input), expected_result
                 )
 
+    # Для выполенения тест нужно исправить выражение
+    # r"(?<=(\d{1,3}/)?)[a-zA-Z_0-9]+\.rptdesign"
     # re.error: look-behind requires fixed-width pattern
     def test_get_templates(self):
         for test_input, expected_result in self.templates_test_cases:
