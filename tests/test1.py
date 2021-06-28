@@ -1,19 +1,5 @@
 import unittest
 from taskcreator import TaskCreator
-from jira import RepositoryBranch
-
-
-class BranchMatcher:
-    branch: RepositoryBranch
-
-    def __init__(self, branch):
-        self._branch = branch
-
-    def __eq__(self, other):
-        return (
-            self._branch._repository_name == other.self._repository_name
-            and self._branch._name == other._name
-        )
 
 
 class TestTaskCreator(unittest.TestCase):
@@ -179,36 +165,15 @@ class TestTaskCreator(unittest.TestCase):
                 "https://git.promedweb.ru/rtmis/report_ms/-/tree/PROMEDWEB-27866  https://git.promedweb.ru/rtmis/report_pg/-/tree/PROMEDWEB-28321",
                 "",
             ],
-            [
-                RepositoryBranch(
-                    "PROMEDWEB-27866", "https://git.promedweb.ru/rtmis/report_ms"
-                ),
-                RepositoryBranch(
-                    "PROMEDWEB-28321", "https://git.promedweb.ru/rtmis/report_pg"
-                ),
-            ],
+            "",
         ),
         (
             ["", "https://git.promedweb.ru/rtmis/report_pg/-/tree/PROMEDWEB-32317", ""],
-            [
-                RepositoryBranch(
-                    "PROMEDWEB-32317", "https://git.promedweb.ru/rtmis/report_pg"
-                )
-            ],
+            "",
         ),
         (
             ["", "https://git.promedweb.ru/rtmis/report_pg/-/tree/PROMEDWEB-51417", ""],
-            [
-                RepositoryBranch(
-                    "PROMEDWEB-51417", "https://git.promedweb.ru/rtmis/report_pg"
-                )
-            ],
-        ),
-        (
-            ["", "-/tree/PROMEDWEB-51417", ""],
-            [
-                Exception
-            ],
+            "",
         ),
     )
 
@@ -222,8 +187,6 @@ class TestTaskCreator(unittest.TestCase):
                     TaskCreator._get_task_name(test_input), expected_result
                 )
 
-    # для выполенения тестов нужно пофиксить проблему в регулярном выражении
-    # r"(?<=(\d{1,3}/)?)[a-zA-Z_0-9]+\.rptdesign"
     # re.error: look-behind requires fixed-width pattern
     def test_get_templates(self):
         for test_input, expected_result in self.templates_test_cases:
@@ -244,20 +207,16 @@ class TestTaskCreator(unittest.TestCase):
                 self.assertEqual(
                     TaskCreator._split_on_delimiters(test_input), expected_result
                 )
-
-    # для выпоенения тестов нужен экземпляр класса TaskCreator
-    # в тесткейса expected_result должен быть список экземпляров класса RepositoryBranch или класс Exception
+    # нужен экземпляр класса
     def test_get_branches(self):
         for test_input, expected_result in self.get_branches_test_cases:
             if expected_result is Exception:
                 with self.assertRaises(expected_result):
                     TaskCreator()._get_branches(test_input)
             else:
-                branches = TaskCreator()._get_branches(test_input)
-                branches.sort()
-                expected_result.sort()
-                for pair in zip(branches, expected_result):
-                    self.assertEqual(BranchMatcher(pair[0]), pair[1])
+                self.assertEqual(
+                    TaskCreator()._get_branches(test_input), expected_result
+                )
 
 
 if __name__ == "__main__":
