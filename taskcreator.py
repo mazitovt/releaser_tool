@@ -31,8 +31,8 @@ class TaskCreator:
     def _try_to_parse_values(self, row):
         is_successful_parse = True
         values_dist = {"name": None, 'branches': [], 'templates': []}
-        parse_methods = [self._get_task_name, self._get_branches,
-                         self._get_templates]
+        parse_methods = [TaskCreator._get_task_name, self._get_branches,
+                         TaskCreator._get_templates]
         for value, method in zip(values_dist, parse_methods):
             try:
                 parsed_values[value] = method()
@@ -43,8 +43,9 @@ class TaskCreator:
             return values_dist
         raise Exception("Parse values from row has failed")
 
-    def _get_task_name(self, row):
-        task_name_pattern = r'NEED_PATTERN'
+    @staticmethod
+    def _get_task_name(row):
+        task_name_pattern = r'[A-Z]-\d+'
         if re.match(task_name_pattern, row[0]) is not None:
             return row[0]
         raise Exception(f"Task name value: '{row[0]}' is not match to pattern")
@@ -53,22 +54,36 @@ class TaskCreator:
         branch_pattern = r'https://git\.promedweb\.ru/rtmis/' \
                          r'(report_(ms|pg))/-/tree/([A-Z]-\d+)'
         failed_values = []
+        not_existed_branches = []
         branches = []
         delimiters = re.compile(r'\s*[;,]?\n?\s*')
         for value in delimiters.split(row[1]):
-            branch = re.match(template_pattern, value)
+            branch = re.match(branch_pattern, value)
             if branch:
                 repository_name = branch.group(1)
                 branch_name = branch.group(2)
                 branches.append(RepositoryBranch(repository_name, branch_name))
             else:
                 failed_values.append(value)
-        if failed_values:
-            raise Exception(f"Branch name values: {failed_values} "
-                            f"is not match to pattern")
+        for branch in branches:
+            if not branch.is_contained_in(self._branches):
+                not_existed_branches.append()
+        if not_existed_branches or failed_values:
+            error_message = ""
+            if not_existed_branches:
+                error_message = f"Branches: {not_existed_branches} " \
+                                f"are not exists"
+            if failed_values:
+                error_message += f"Branch name values: {failed_values} " \
+                                 f"are not match to pattern"
+            raise Exception(error_message)
+        if not branches:
+            raise Exception("Branches are not found")
+        return branches
 
-    def _get_templates(self, row):
-        template_pattern = r'NEED_PATTERN'
+    @staticmethod
+    def _get_templates(row):
+        template_pattern = r'[a-zA-Z_-0-9]*\.rptdesign]'
         failed_values = []
         templates = []
         delimiters = re.compile(r'\s*[;,]?\n?\s*')
@@ -81,3 +96,6 @@ class TaskCreator:
         if failed_values:
             raise Exception(f"Template name values: {failed_values} "
                             f"is not match to pattern")
+        if not templates:
+            raise Exception("Templates are not found")
+        return templates
