@@ -1,255 +1,42 @@
-from logger import get_logger
+class RepositoryBranch:
+    def __init__(self, repository_name, branch_name):
+        self._name = branch_name
+        self._repository_name = repository_name
 
-column_names = [
-    "Ключ проблемы",
-    "Идентификатор проблемы",
-    "Тип задачи",
-    "Статус",
-    "Тема",
-    "Исправить в версиях",
-    "Действия при обновлении",
-    "Ссылка на yml",
-    "Ветка в Git",
-    "Шаблоны отчетов",
-    "Шаблоны MS",
-    "Шаблоны PG",
-    "Объекты в БД",
-    "Объекты в MS",
-    "Объекты в PG",
-]
+    def is_contained_in(self, branches):
+        pass
+        raise Exception("Not implemented")
+        # TODO: need to implement method
 
-column_index_to_name = {
-    0: "Ключ проблемы",
-    1: "Идентификатор проблемы",
-    2: "Тип задачи",
-    3: "Статус",
-    4: "Тема",
-    5: "Исправить в версиях",
-    6: "Действия при обновлении",
-    7: "Ссылка на yml",
-    8: "Ветка в Git",
-    9: "Шаблоны отчетов",
-    10: "Шаблоны MS",
-    11: "Шаблоны PG",
-    12: "Объекты в БД",
-    13: "Объекты в MS",
-    14: "Объекты в PG",
-}
+    def get_changed_templates(self, target_branch):
+        pass
+        raise Exception("Not implemented")
+        # TODO: need to implement method
 
-
-def better_split_params(params, one_or_none):
-
-    # Разделяет параметры со всеми случаями разделения (новая строка, пробел, запятая).
-    # После разделения убирает пробелы спереди и сзади параметра.
-    # ПОКА НЕ Проверяет, не забыл ли пользователь разделить параметры.
-    # Возвращает список.
-    #
-    # Parameters
-    # ----------
-    # params : str
-    #     Строка параметров (один или несколько) разделенных пробелом, символом новой строки, запятой, запятой с пробелом.
-    # one_or_none: bool
-    #     Строка может содержать один или не содержать параметра.
-    pass
-
-
-def split_params(params):
-    """
-    Разделяет параметры и возвращает список
-
-    :param params: строка из параметров через символ новой строки
-    :return:
-    """
-
-    if "\n" in params:
-        return [
-            param.strip()
-            for param in list(
-                filter(
-                    bool,
-                    params.split(
-                        "\n",
-                    ),
-                )
-            )
-        ]
-    if params == "":
-        return []
-    return [params.strip()]
-
-
-def print_in_column(task):
-    """
-    Распечатать все поля задачи в колонку
-
-    :param task:
-    :return:
-    """
-    print(100 * "-")
-    print()
-    print(f"Номер строки: {task.row_number}")
-    for index in range(len(column_names)):
-        print(
-            column_names[index]
-            + ": "
-            + (",\n" + (len(column_names[index]) + 2) * " ").join(task.params[index])
-        )
-
-
-def print_empty_fields(task):
-    """
-    Распечатать пустые поля задачи
-
-    :param task:
-    :return:
-    """
-    print(
-        str(task.row_number)
-        + " ("
-        + " ".join(task.task_key)
-        + "): "
-        + ", ".join(task.empty_params_names())
-    )
+    def merge_into(self, target_branch):
+        pass
+        raise Exception("Not implemented")
+        # TODO: need to implement method
 
 
 class JiraTask:
-    """
-    Класс задачи из Jira
-    """
+    def __init__(self, name, branches, templates):
+        self._name = name
+        self._branches = branches
+        self._templates = templates
 
-    def __init__(
-        self,
-        log_config,
-        row_number,
-        task_key,
-        task_id,
-        task_type,
-        status,
-        subject,
-        fix_in_versions,
-        update_action,
-        yml_link,
-        git_branch,
-        report_template,
-        db_objects,
-    ):
-        self._logger = get_logger(log_config)
+    def check_commits(self):
+        changed_templates = []
+        for branch in self._branches:
+            changed_templates = branch.get_changed_templates(target_branch)
+        for template in changed_templates:
+            if template not in self._templates:
+                raise Exception("Not implemented")
+        self._check_templates_vise_versa()
 
-        self.row_number = row_number
+    def merge_branches(self):
+        for branch in self._branches:
+            branch.merge_into(target_branch)
 
-        self.task_key = split_params(task_key)
-        self.task_id = split_params(task_id)
-        self.task_type = split_params(task_type)
-        self.status = split_params(status)
-        self.subject = split_params(subject)
-        self.fix_in_versions = split_params(fix_in_versions)
-        self.update_action = split_params(update_action)
-        self.yml_link = split_params(yml_link)
-        self.git_branch = split_params(git_branch)
-        self.report_template = split_params(report_template)
-        self.db_objects = split_params(db_objects)
-
-        self.report_ms = []
-        self.report_pg = []
-        self.distribute_reports(self.report_template)
-
-        self.db_objects_ms = []
-        self.db_objects_pg = []
-        self.distribute_db_object(self.db_objects)
-
-        self.params = [
-            self.task_key,
-            self.task_id,
-            self.task_type,
-            self.status,
-            self.subject,
-            self.fix_in_versions,
-            self.update_action,
-            self.yml_link,
-            self.git_branch,
-            self.report_template,
-            self.report_ms,
-            self.report_pg,
-            self.db_objects,
-            self.db_objects_ms,
-            self.db_objects_pg,
-        ]
-
-        self.check_required_params()
-
-    def check_required_params(self):
-        """
-        Проверить обязательные поля на заполенение и записать в лог
-
-        :return:
-        """
-        empty_params = self.get_empty_required_params()
-
-        if empty_params:
-            self._logger.error(
-                f"Строка {self.row_number}, задача {', '.join(self.task_key)}: Нет значений в обязательных полях: {', '.join(empty_params)}"
-            )
-
-    def get_empty_required_params(self):
-        """
-        Получить список имен пустых обязательных полей
-
-        :return: список строк
-        """
-        empty_required_params = []
-        if not self.update_action:
-            empty_required_params.append("Действия при обновлении")
-        if not self.report_template:
-            empty_required_params.append("Шаблоны отчетов")
-        return empty_required_params
-
-    def distribute_reports(self, reports):
-        """
-        Распределить шаблоны отчетов по MS и PG
-
-        :param reports: список всех шаблонов отчетов
-        :return: ничего
-        """
-        for report in reports:
-            if "_pg." in report.lower():
-                self.report_pg.append(report)
-            else:
-                self.report_ms.append(report)
-
-    def distribute_db_object(self, db_object):
-        """
-        Распределить объекты БД по MS И PG
-
-        :param db_object: список всех объектов БД
-        :return: ничего
-        """
-        for db_object in db_object:
-            if "_pg" in db_object.lower()[-3:]:
-                self.db_objects_pg.append(db_object)
-            else:
-                self.db_objects_ms.append(db_object)
-
-    def __str__(self):
-        return ", ".join(
-            ["Задача " + str(self.row_number), *self.task_key, *self.subject]
-        )
-
-    def empty_params_names(self):
-        """
-        Получить список имен пустых полей задачи
-
-        :return: список строк
-        """
-        return [
-            column_index_to_name[index]
-            for index, param in enumerate(self.params)
-            if not param
-        ]
-
-    def empty_params_indexes(self):
-        """
-        Получить список индексов пустых полей задачи
-
-        :return: список чисел
-        """
-        return [index for index, param in enumerate(self.params) if not param]
+    def _check_templates_vise_versa(self):
+        pass
