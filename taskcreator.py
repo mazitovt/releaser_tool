@@ -83,8 +83,8 @@ class TaskCreator:
 
     @staticmethod
     def _get_templates(row):
-        template_pattern = r'[a-zA-Z_-0-9]*\.rptdesign]'
-        # TODO: update template 59/r59_template.rptdesign
+        template_pattern = r'(?<=(\d{1,3}/)?)[a-zA-Z_-0-9]+\.rptdesign]'
+        # 59/r59_template.rptdesign
         failed_values = []
         templates = []
         delimiters = re.compile(r'\s*[;,]?\n?\s*')
