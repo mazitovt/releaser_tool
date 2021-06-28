@@ -2,7 +2,7 @@ import logging
 import logging.config
 import re
 
-from jira import JiraTask, RepositoryBranch
+from jira_classes.jira import JiraTask, RepositoryBranch
 
 
 class TaskCreator:
