@@ -45,14 +45,14 @@ class TaskCreator:
 
     @staticmethod
     def _get_task_name(row):
-        task_name_pattern = r'[A-Z]-\d+'
+        task_name_pattern = r'[A-Z]+-\d+'
         if re.match(task_name_pattern, row[0]) is not None:
             return row[0]
         raise Exception(f"Task name value: '{row[0]}' is not match to pattern")
 
     def _get_branches(self, row):
         branch_pattern = r'https://git\.promedweb\.ru/rtmis/' \
-                         r'(report_(ms|pg))/-/tree/([A-Z]-\d+)'
+                         r'(report_(ms|pg))/-/tree/([A-Z]+-\d+)'
         failed_values = []
         not_existed_branches = []
         branches = []
@@ -84,6 +84,7 @@ class TaskCreator:
     @staticmethod
     def _get_templates(row):
         template_pattern = r'[a-zA-Z_-0-9]*\.rptdesign]'
+        # TODO: update template 59/r59_template.rptdesign
         failed_values = []
         templates = []
         delimiters = re.compile(r'\s*[;,]?\n?\s*')
