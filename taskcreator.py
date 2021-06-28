@@ -25,14 +25,18 @@ class TaskCreator:
 
     def _create_task(self, row):
         values_dist = self._try_to_parse_values(row)
-        return JiraTask(values_dist["name"], values_dist["branches"],
-                        values_dist["templates"])
+        return JiraTask(
+            values_dist["name"], values_dist["branches"], values_dist["templates"]
+        )
 
     def _try_to_parse_values(self, row):
         is_successful_parse = True
-        values_dist = {"name": None, 'branches': [], 'templates': []}
-        parse_methods = [TaskCreator._get_task_name, self._get_branches,
-                         TaskCreator._get_templates]
+        values_dist = {"name": None, "branches": [], "templates": []}
+        parse_methods = [
+            TaskCreator._get_task_name,
+            self._get_branches,
+            TaskCreator._get_templates,
+        ]
         for value, method in zip(values_dist, parse_methods):
             try:
                 parsed_values[value] = method()
@@ -45,18 +49,20 @@ class TaskCreator:
 
     @staticmethod
     def _get_task_name(row):
-        task_name_pattern = r'[A-Z]+-\d+'
+        task_name_pattern = r"[A-Z]+-\d+"
         if re.match(task_name_pattern, row[0]) is not None:
             return row[0]
         raise Exception(f"Task name value: '{row[0]}' is not match to pattern")
 
     def _get_branches(self, row):
-        branch_pattern = r'https://git\.promedweb\.ru/rtmis/' \
-                         r'(report_(ms|pg))/-/tree/([A-Z]+-\d+)'
+        branch_pattern = (
+            r"https://git\.promedweb\.ru/rtmis/"
+            r"(report_(ms|pg))/-/tree/([A-Z]+-\d+)"
+        )
         failed_values = []
         not_existed_branches = []
         branches = []
-        delimiters = re.compile(r'\s*[;,]?\n?\s*')
+        delimiters = re.compile(r"\s*[;,]?\n?\s*")
         for value in delimiters.split(row[1]):
             branch = re.match(branch_pattern, value)
             if branch:
@@ -71,11 +77,11 @@ class TaskCreator:
         if not_existed_branches or failed_values:
             error_message = ""
             if not_existed_branches:
-                error_message = f"Branches: {not_existed_branches} " \
-                                f"are not exists"
+                error_message = f"Branches: {not_existed_branches} " f"are not exists"
             if failed_values:
-                error_message += f"Branch name values: {failed_values} " \
-                                 f"are not match to pattern"
+                error_message += (
+                    f"Branch name values: {failed_values} " f"are not match to pattern"
+                )
             raise Exception(error_message)
         if not branches:
             raise Exception("Branches are not found")
@@ -83,20 +89,31 @@ class TaskCreator:
 
     @staticmethod
     def _get_templates(row):
-        template_pattern = r'(?<=(\d{1,3}/)?)[a-zA-Z_-0-9]+\.rptdesign]'
+        template_pattern = r"(?<=(\d{1,3}/)?)[a-zA-Z_0-9]+\.rptdesign"
         # 59/r59_template.rptdesign
         failed_values = []
         templates = []
-        delimiters = re.compile(r'\s*[;,]?\n?\s*')
+        delimiters = re.compile(r"\s*[;,]?\n?\s*") # не работает. возможно r"[;,\n\s]+"
         for value in delimiters.split(row[2]):
             template = re.match(template_pattern, value)
             if template:
-                templates.append(template)
+                templates.append(value)
             else:
                 failed_values.append(value)
         if failed_values:
-            raise Exception(f"Template name values: {failed_values} "
-                            f"is not match to pattern")
+            raise Exception(
+                f"Template name values: {failed_values} " f"is not matched to pattern"
+            )
         if not templates:
             raise Exception("Templates are not found")
         return templates
+
+    # выделил метод, чтобы протестировать регулярное выражение
+    @staticmethod
+    def _split_on_delimiters(row):
+        delimiters = re.compile(r"[;,\n\s]+")
+        items = delimiters.split(row[2])
+        items = list(filter(bool, items))
+        if not items:
+            raise Exception("Empty list of items")
+        return items
