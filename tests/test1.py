@@ -1,6 +1,5 @@
 import unittest
 from taskcreator import TaskCreator
-
 from jira import RepositoryBranch
 
 
@@ -180,15 +179,30 @@ class TestTaskCreator(unittest.TestCase):
                 "https://git.promedweb.ru/rtmis/report_ms/-/tree/PROMEDWEB-27866  https://git.promedweb.ru/rtmis/report_pg/-/tree/PROMEDWEB-28321",
                 "",
             ],
-            "",
+            [
+                RepositoryBranch(
+                    "PROMEDWEB-27866", "https://git.promedweb.ru/rtmis/report_ms"
+                ),
+                RepositoryBranch(
+                    "PROMEDWEB-28321", "https://git.promedweb.ru/rtmis/report_pg"
+                ),
+            ],
         ),
         (
             ["", "https://git.promedweb.ru/rtmis/report_pg/-/tree/PROMEDWEB-32317", ""],
-            "",
+            [
+                RepositoryBranch(
+                    "PROMEDWEB-32317", "https://git.promedweb.ru/rtmis/report_pg"
+                )
+            ],
         ),
         (
             ["", "https://git.promedweb.ru/rtmis/report_pg/-/tree/PROMEDWEB-51417", ""],
-            "",
+            [
+                RepositoryBranch(
+                    "PROMEDWEB-51417", "https://git.promedweb.ru/rtmis/report_pg"
+                )
+            ],
         ),
     )
 
@@ -202,8 +216,6 @@ class TestTaskCreator(unittest.TestCase):
                     TaskCreator._get_task_name(test_input), expected_result
                 )
 
-    # для выполенения тестов нужно исправить регулрное выражение
-    # r"(?<=(\d{1,3}/)?)[a-zA-Z_0-9]+\.rptdesign"
     # re.error: look-behind requires fixed-width pattern
     def test_get_templates(self):
         for test_input, expected_result in self.templates_test_cases:
