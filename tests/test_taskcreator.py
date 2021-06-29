@@ -227,7 +227,8 @@ class TestTaskCreator(unittest.TestCase):
                 for pair in zip(branches, expected_result):
                     self.assertEqual((pair[0]._name, pair[0]._repository_name), pair[1])
 
-    # def test_get_branches_simple(self):
+    def test_get_branches_simple(self):
+        pass
 
 
 if __name__ == "__main__":
