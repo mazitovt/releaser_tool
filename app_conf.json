@@ -1,0 +1,11 @@
+{
+  "jira_api": {
+    "server" : "https://jira.is-mis.ru",
+    "login": "Timur.Mazitov",
+    "password": "{Qv:@$(kp:",
+    "projects": "PROMEDWEB",
+    "status": "\"Waiting for release\"",
+    "versions": "prmd.7.16.0, prmd.7.16.1-rc",
+    "maxResult": "100"
+  }
+}
