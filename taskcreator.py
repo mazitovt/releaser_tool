@@ -1,15 +1,16 @@
 import logging
 import logging.config
 import re
-
-from jira_classes.jira import JiraTask, RepositoryBranch
+from logger import (LOG_CONF_FILE_PATH, load_json, get_logger)
+from jira_task import JiraTask
+from repo_branch import RepositoryBranch
 
 
 class TaskCreator:
-    def __init__(self, all_branches, config_dict):
-        # logging.config.dictConfig(config_dict)
-        logging.config.dictConfig(config_dict)
-        self._logger = logging.getLogger(__name__)
+    def __init__(self, all_branches):
+        # log_config = load_json(LOG_CONF_FILE_PATH)
+        # logging.config.dictConfig(log_config)
+        # self._logger = get_logger(log_config)
         pass
 
     def create_tasks_from_list(self, tasks_data):
@@ -20,7 +21,6 @@ class TaskCreator:
                 jira_tasks.append(self._create_task(task_dict))
             except Exception as e:
                 self._logger.exception(e)
-                self._logger.info('-'*50)
                 has_no_errors = False
         if has_no_errors:
             return jira_tasks
@@ -95,13 +95,13 @@ class TaskCreator:
         if not str_templates:
             return []
         # template_pattern = r"(?<=(\d{1,3}/)?)[a-zA-Z_0-9]+\.rptdesign"
-        template_pattern = r"[a-zA-Z_0-9]+\.rptdesign"
+        # template_pattern = r"[a-zA-Z_0-9]+\.rptdesign"
         # 59/r59_template.rptdesign
         failed_values = []
         templates = []
         # delimiters = re.compile(r"\s*[;,]?\n?\s*")  # не работает. возможно r"[;,\n\s]+"
         for value in TaskCreator._split_on_delimiters(str_templates):
-            template = re.match(template_pattern, value)
+            template = TaskCreator._match_template_pattern(value)
             if template:
                 templates.append(value)
             else:
@@ -116,7 +116,28 @@ class TaskCreator:
 
     # выделил метод, чтобы протестировать регулярное выражение
     @staticmethod
+    def _match_template_pattern(value):
+        """
+        Совпадение по шаблону отчета
+        :param value:
+        :return: строка или None
+        """
+        template_pattern = r"[a-zA-Z_0-9]+\.rptdesign"
+        return re.match(template_pattern, value)
+
+    # для внешних вызовов
+    @staticmethod
+    def match_template_pattern(value):
+        return TaskCreator._match_template_pattern(value)
+
+    # выделил метод, чтобы протестировать регулярное выражение
+    @staticmethod
     def _split_on_delimiters(string):
+        """
+        Разделяет строку по [;,\n\s]+ и очищает от пустых строк
+        :param string:
+        :return: список строк
+        """
         delimiters = re.compile(r"[;,\n\s]+")
         items = delimiters.split(string)
         items = list(filter(bool, items))

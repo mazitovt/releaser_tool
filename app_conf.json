@@ -5,7 +5,14 @@
     "password": "{Qv:@$(kp:",
     "projects": "PROMEDWEB",
     "status": "\"Waiting for release\"",
-    "versions": "prmd.7.16.0, prmd.7.16.1-rc",
+    "versions": "prmd.7.17.0",
     "maxResult": "100"
-  }
+  },
+  "repository": {
+      "git_folder_path":"E:/RTMIS/report_ms_clone",
+      "tree_folder":"Report",
+      "report_ms": "E:/RTMIS/report_ms_clone",
+      "report_pg": "",
+      "target_branch": "master"
+   }
 }

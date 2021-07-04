@@ -21,7 +21,11 @@ def jira_issues(server, user_login, password, jql, max_result=100):
     :return: список словарей
     """
     jira_connection = JIRA(server=server, basic_auth=(user_login, password))
-    issues = jira_connection.search_issues(maxResults=max_result, jql_str=jql, fields=['key','customfield_12501', 'customfield_11983'])
+
+    # key - имя задачи (PROMEDWEB-XXXXX)
+    # 'customfield_11983' - поле 'Действие при обновлении'
+    # 'customfield_12501' - поле 'Шаблоны отчетов'
+    issues = jira_connection.search_issues(maxResults=max_result, jql_str=jql, fields=['key','customfield_11983', 'customfield_12501'])
 
     return [
         {
