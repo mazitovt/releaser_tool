@@ -4,13 +4,14 @@ import re
 from logger import (LOG_CONF_FILE_PATH, load_json, get_logger)
 from jira_task import JiraTask
 from repo_branch import RepositoryBranch
+from regex_patterns import (match_template_pattern, split_on_delimiters)
 
 
 class TaskCreator:
     def __init__(self, all_branches):
-        # log_config = load_json(LOG_CONF_FILE_PATH)
-        # logging.config.dictConfig(log_config)
-        # self._logger = get_logger(log_config)
+        log_config = load_json(LOG_CONF_FILE_PATH)
+        logging.config.dictConfig(log_config)
+        self._logger = get_logger(log_config)
         pass
 
     def create_tasks_from_list(self, tasks_data):
@@ -70,9 +71,7 @@ class TaskCreator:
         )
         failed_values = []
         branches = []
-        # delimiters = re.compile(r"\s*[;,]?\n?\s*")  # не работает. возможно r"[;,\n\s]+"
-        # delimiters = re.compile(r"[;,\n\s]+")  # не работает. возможно r"[;,\n\s(\r\n)]+"
-        for value in TaskCreator._split_on_delimiters(str_branches):
+        for value in split_on_delimiters(str_branches):
             branch = re.match(branch_pattern, value)
             if branch:
                 repository_name = branch.group(1)
@@ -94,16 +93,12 @@ class TaskCreator:
     def _get_templates(str_templates):
         if not str_templates:
             return []
-        # template_pattern = r"(?<=(\d{1,3}/)?)[a-zA-Z_0-9]+\.rptdesign"
-        # template_pattern = r"[a-zA-Z_0-9]+\.rptdesign"
-        # 59/r59_template.rptdesign
         failed_values = []
         templates = []
-        # delimiters = re.compile(r"\s*[;,]?\n?\s*")  # не работает. возможно r"[;,\n\s]+"
-        for value in TaskCreator._split_on_delimiters(str_templates):
-            template = TaskCreator._match_template_pattern(value)
+        for value in split_on_delimiters(str_templates):
+            template = match_template_pattern(value)
             if template:
-                templates.append(value)
+                templates.append(template)
             else:
                 failed_values.append(value)
         if failed_values:
@@ -113,35 +108,3 @@ class TaskCreator:
         if not templates:
             raise Exception("Templates are not found")
         return templates
-
-    # выделил метод, чтобы протестировать регулярное выражение
-    @staticmethod
-    def _match_template_pattern(value):
-        """
-        Совпадение по шаблону отчета
-        :param value:
-        :return: строка или None
-        """
-        template_pattern = r"[a-zA-Z_0-9]+\.rptdesign"
-        return re.match(template_pattern, value)
-
-    # для внешних вызовов
-    @staticmethod
-    def match_template_pattern(value):
-        return TaskCreator._match_template_pattern(value)
-
-    # выделил метод, чтобы протестировать регулярное выражение
-    @staticmethod
-    def _split_on_delimiters(string):
-        """
-        Разделяет строку по [;,\n\s]+ и очищает от пустых строк
-        :param string:
-        :return: список строк
-        """
-        delimiters = re.compile(r"[;,\n\s]+")
-        items = delimiters.split(string)
-        items = list(filter(bool, items))
-        if not items:
-            raise Exception("Empty list of items")
-        return items
-

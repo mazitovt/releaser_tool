@@ -10,7 +10,7 @@ class JiraTask:
         self._logger = get_logger(log_config)
 
     def __str__(self):
-        return f"JiraTask {self._name}," \
+        return f"JiraTask {self._name}" \
                f"\nBranches: {', '.join([str(b) for b in self._branches])}" \
                f"\nTemplates: {', '.join([str(t) for t in self._templates])}"
 

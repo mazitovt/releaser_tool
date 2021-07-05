@@ -9,7 +9,7 @@
     "maxResult": "100"
   },
   "repository": {
-      "git_folder_path":"E:/RTMIS/report_ms_clone",
+      "git_folder_path":"",
       "tree_folder":"Report",
       "report_ms": "E:/RTMIS/report_ms_clone",
       "report_pg": "",

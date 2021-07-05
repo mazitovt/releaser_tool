@@ -25,7 +25,11 @@ def jira_issues(server, user_login, password, jql, max_result=100):
     # key - имя задачи (PROMEDWEB-XXXXX)
     # 'customfield_11983' - поле 'Действие при обновлении'
     # 'customfield_12501' - поле 'Шаблоны отчетов'
-    issues = jira_connection.search_issues(maxResults=max_result, jql_str=jql, fields=['key','customfield_11983', 'customfield_12501'])
+    issues = jira_connection.search_issues(
+        maxResults=max_result,
+        jql_str=jql,
+        fields=["key", "customfield_11983", "customfield_12501"],
+    )
 
     return [
         {
@@ -87,9 +91,3 @@ def get_data_list():
     )
 
     return [list(issue.values()) for issue in issues]
-#
-# for i in get_data_dict():
-#     for k,v in i.items():
-#         print(k,v)
-# for i in get_data_list():
-#     print(i)
