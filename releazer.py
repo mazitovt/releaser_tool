@@ -1,7 +1,6 @@
 import sys
 import csv
 
-from jira_classes.jira import JiraTask
 
 def read_file(file_name):
     file = open(file_name, encoding="utf-8")

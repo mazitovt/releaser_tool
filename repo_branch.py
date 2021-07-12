@@ -1,19 +1,46 @@
-from logger import load_json, APP_CONF_FILE_PATH
+from logger import load_json, APP_CONF_FILE_PATH, LOG_CONF_FILE_PATH, get_logger
+import logging
+import logging.config
 from git import Repo, Git
 from regex_patterns import match_template_pattern
 
 
 class RepositoryBranch:
+    """
+    Ветка в git репозитории
+    """
+    # TODO: Ошибка, если не заполенены поля report_ms и report_pg в app.conf
+    repo_conf = load_json(APP_CONF_FILE_PATH)["repository"]
+    REPOSITORIES = {
+        "report_ms": {
+            "repo": Repo(repo_conf["report_ms"]),
+            "repo_path": repo_conf["report_ms"],
+        },
+        "report_pg": {
+            "repo": Repo(repo_conf["report_pg"]),
+            "repo_path": repo_conf["report_pg"],
+        },
+    }
+
     def __init__(self, repository_name, branch_name):
         self._name = branch_name
         self._repository_name = repository_name
-        self._logger = None
+        self._repo = self._get_repo()
+        log_config = load_json(LOG_CONF_FILE_PATH)
+        logging.config.dictConfig(log_config)
+        self._logger = get_logger(log_config)
 
     def __str__(self):
         return f"{self._name} in {self._repository_name}"
 
     def __repr__(self):
         return str(self)
+
+    def _get_repo(self):
+        try:
+            return RepositoryBranch.REPOSITORIES[self._repository_name]["repo"]
+        except Exception as e:
+            raise Exception("No such RepositoryBranch in REPOSITORIES.")
 
     def is_contained_in(self, branches):
         pass
@@ -23,24 +50,21 @@ class RepositoryBranch:
     def get_changed_templates(self, target_branch):
 
         try:
-            repo_path = load_json(APP_CONF_FILE_PATH)["repository"][self._repository_name]
+            target_commit = self._repo.heads[target_branch].commit
+            self_commit = self._repo.heads[self._name].commit
         except Exception as e:
-            self._logger.error("No such repository_name in app_conf")
-            raise Exception("Error occurred during parsing app_conf")
-
-        repo = Repo(repo_path)
-        target_commit = repo.heads[target_branch].commit
-        self_commit = repo.heads[self._name].commit
-
+            self._logger.error(str(e))
+            raise Exception(f"Repository doesn't contain branches {target_branch} or {self._name}.")
         # a_path может отличаться от b_path наличием папки
         # Вызов match_template_pattern нужен для удаления названия папки из пути файла
         diff_file_names = []
 
+        # TODO: текущее поведение: если в репозитории измененный файл не подходит под шаблон, то бросает исключение
         for diff in target_commit.diff(self_commit):
             name = match_template_pattern(diff.a_path)
             if not name:
                 raise Exception(
-                    "File name from git repository doesn't match template re-pattern"
+                    "File name from git repository doesn't match template pattern."
                 )
             diff_file_names.append(name)
 
@@ -48,21 +72,13 @@ class RepositoryBranch:
 
     def merge_into(self, target_branch):
         try:
-            repo_path = load_json(APP_CONF_FILE_PATH)["repository"][self._repository_name]
+            checkout_res = self._repo.git.checkout(target_branch)
+            merge_res = self._repo.git.merge(self._name)
+            self._logger.info('. '.join(merge_res.split('\n')))
         except Exception as e:
-            self._logger.error("No such repository_name in app_conf")
-            raise Exception("Error occurred during parsing app_conf")
-        try:
-            g = Git(repo_path)
-            checkout_res = g.checkout(target_branch)
-            merge_res = g.merge(self._name)
-            self._logger.info(merge_res)
-        except Exception as e:
-            self._logger.error(e)
-            raise Exception("Error occurred during merge process")
+            raise Exception("Error occurred while merging.")
 
-
-        #TODO: Код ниже требует доработки
+        # TODO: Код ниже (требует доработки) - альтернатива self._repo.git.merge(self._name)
 
         # repo_path = load_json(APP_CONF_FILE_PATH)["repository"][self._repository_name]
         # repo = Repo(repo_path)

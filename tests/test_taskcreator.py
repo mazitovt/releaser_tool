@@ -1,7 +1,17 @@
 import unittest
 from taskcreator import TaskCreator
-from regex_patterns import match_template_pattern, split_on_delimiters
+from regex_patterns import (
+    match_task_name_pattern,
+    match_branch_pattern,
+    match_template_pattern,
+    split_on_delimiters,
+)
+from logger import *
 
+log_config = load_json(LOG_CONF_FILE_PATH)
+check_log_folder(log_config)
+logging.config.dictConfig(log_config)
+logger = get_logger(log_config)
 
 class TestTaskCreator(unittest.TestCase):
     """
@@ -487,7 +497,8 @@ class TestTaskCreator(unittest.TestCase):
             TaskCreator._get_templates("f7_2019_2000.rptdesiign")
 
     def test_get_templates_27(self):
-        self.assertEqual(TaskCreator._get_templates(""), [])
+        with self.assertRaises(Exception):
+            TaskCreator._get_templates("")
 
     def test_get_templates_28(self):
         with self.assertRaises(Exception):
@@ -555,7 +566,7 @@ class TestTaskCreator(unittest.TestCase):
 class TestRegexPatterns(unittest.TestCase):
     """
     Тестирование функций с ругулярными выражениями:
-        split_on_delimiters, match_template_pattern
+       split_on_delimiters, match_template_pattern, match_branch_pattern
     """
 
     # ======= Start of testing _split_on_delimiters # =======
@@ -623,32 +634,25 @@ class TestRegexPatterns(unittest.TestCase):
         )
 
     def test_split_on_delimiters_06(self):
-        with self.assertRaises(Exception):
-            split_on_delimiters(" ")
+        self.assertEqual(split_on_delimiters(" "), [])
 
     def test_split_on_delimiters_07(self):
-        with self.assertRaises(Exception):
-            split_on_delimiters("\n")
+        self.assertEqual(split_on_delimiters("\n"), [])
 
     def test_split_on_delimiters_08(self):
-        with self.assertRaises(Exception):
-            split_on_delimiters(",")
+        self.assertEqual(split_on_delimiters(","), [])
 
     def test_split_on_delimiters_09(self):
-        with self.assertRaises(Exception):
-            split_on_delimiters(" \n ; ,\r\n")
+        self.assertEqual(split_on_delimiters(" \n ; ,\r\n"), [])
 
     def test_split_on_delimiters_10(self):
-        with self.assertRaises(Exception):
-            split_on_delimiters("\n;, ")
+        self.assertEqual(split_on_delimiters("\n;, "), [])
 
     def test_split_on_delimiters_11(self):
-        with self.assertRaises(Exception):
-            split_on_delimiters(" \r\n;, ")
+        self.assertEqual(split_on_delimiters(" \r\n;, "), [])
 
     def test_split_on_delimiters_12(self):
-        with self.assertRaises(Exception):
-            split_on_delimiters("")
+        self.assertEqual(split_on_delimiters(""), [])
 
     # ======= End of testing _split_on_delimiters # ========
 
@@ -677,14 +681,44 @@ class TestRegexPatterns(unittest.TestCase):
         )
 
     def test_match_template_pattern_05(self):
-        with self.assertRaises(Exception):
-            match_template_pattern("1010/f7_2019_2000.rptdesign")
+        self.assertEqual(match_template_pattern("1017/f7_2019_2000.rptdesign"), None)
 
     def test_match_template_pattern_06(self):
-        with self.assertRaises(Exception):
-            match_template_pattern("/f7_2019_2000.rptdesign")
+        self.assertEqual(match_template_pattern("/f7_2019_2000.rptdesign"), None)
 
     # ======= End of testing match_template_pattern # =======
+
+    # ======= Start of testing match_template_pattern # =======
+
+    def test_match_branch_pattern_01(self):
+        self.assertEqual(
+            match_branch_pattern(
+                "https://git.promedweb.ru/rtmis/report_ms/-/tree/PROMEDWEB-27866"
+            ),
+            {"repository_name": "report_ms", "branch_name": "PROMEDWEB-27866"},
+        )
+
+    # ======= End of testing match_template_pattern # =======
+
+    # ======= Start of testing match_task_name_pattern # =======
+
+    def test_match_task_name_pattern_01(self):
+        self.assertEqual(
+            match_task_name_pattern(
+                "PROMEDWEB-27866"
+            ),
+            "PROMEDWEB-27866"
+        )
+
+    def test_match_task_name_pattern_02(self):
+        self.assertEqual(
+            match_task_name_pattern(
+                "PROMEDWEB27866"
+            ),
+            None
+        )
+
+    # ======= End of testing match_task_name_pattern # =======
 
 
 if __name__ == "__main__":
