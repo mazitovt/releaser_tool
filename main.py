@@ -3,6 +3,7 @@ from jira.exceptions import JIRAError
 from jira_api import *
 from taskcreator import TaskCreator
 from logger import *
+from pathlib import Path
 
 
 def print_raw_data(data_list_of_dict):
@@ -70,14 +71,13 @@ def check_git():
         for task in get_tasks_list(file):
             verified = False
             try:
-                # print(f"Проверяю задачу {task._name}", end="\r")
                 task.check_commits()
                 verified = True
-            except Exception as e:
+            except Exception as er:
                 has_no_errors = False
-                logger.error(str(e))
+                logger.error(str(er))
 
-            print(f"{task._name} | {('PASS' if verified else 'FAIL')}")
+            print(f"{task._name:>15} | {('PASS' if verified else 'FAIL')}")
 
         if has_no_errors:
             logger.info(f"File {file} passed git check.")
@@ -106,14 +106,13 @@ def merge_branches():
         for task in get_tasks_list(file):
             verified = False
             try:
-                # print(f"Проверяю задачу {task._name}", end="\r")
                 task.merge_branches()
                 verified = True
             except Exception as e:
                 has_no_errors = False
                 logger.error(str(e))
 
-            print(f"{task._name} | {('PASS' if verified else 'FAIL')}")
+            print(f"{task._name:>15} | {('PASS' if verified else 'FAIL')}")
 
         if has_no_errors:
             logger.info(f"File {file} passed git merge.")
@@ -139,10 +138,8 @@ def show_last_files():
 
     if files:
         print(f"Последние измененные файлы в папке {CSV_DIR}:")
-        index = 0
-        while index < 5 and index < len(files):
-            print(files[index])
-            index += 1
+        for file in files[:5]:
+            print(file)
     else:
         print(f"Папка {CSV_DIR} не содержит файлов.")
 
@@ -191,7 +188,12 @@ logger.info(f"{'Start app':-^30}")
 
 app_conf = load_json(APP_CONF_FILE_PATH)
 CSV_DIR = app_conf["csv_dir"]
-menu()
+create_folder(CSV_DIR)
+
+try:
+    menu()
+except Exception as e:
+    logger.error(str(e))
 
 logger.info(f"{'Stop app':-^30}")
 

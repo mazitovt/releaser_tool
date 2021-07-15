@@ -1,15 +1,12 @@
-from jira import JIRA
-from jira.exceptions import JIRAError
 import json
-from pathlib import Path
-
+import os
+from datetime import datetime as dt
 from typing import List
 
-from csv import DictWriter, DictReader
-from datetime import datetime as dt
-import os
+from jira import JIRA
+from jira.exceptions import JIRAError
 
-APP_CONF_FILE_PATH = "app_conf.json"
+from csv import DictWriter, DictReader
 
 
 def load_json(json_file_path):
@@ -17,14 +14,14 @@ def load_json(json_file_path):
         return json.load(conf_file)
 
 
-def check_csv_folder(dir):
+def create_folder(directory):
     """
     Проверяет существование каталога для сохранения логов,
     если задано логгирование в файл.
     Создает каталог если он не существует.
     """
-    if not os.path.isdir(dir):
-        os.mkdir(dir)
+    if not os.path.isdir(directory):
+        os.mkdir(directory)
 
 
 def read_from_csv(file_path, skip_headers: bool) -> List[dict]:
@@ -66,7 +63,7 @@ def pack_data_to_csv(csv_dir, list_of_data_dict) -> str:
     return csv_name
 
 
-def jira_issues(server, user_login, password, jql, max_result=100):
+def jira_issues(server, user_login, password, jql, max_result=100, proxy = None):
     """
     Возвращает список задач по jql запросу
 
@@ -75,12 +72,15 @@ def jira_issues(server, user_login, password, jql, max_result=100):
     :param jql: JQL запрос
     :param server: адрес сервера
     :param max_result: максимальное количество задач
+    :param proxy: адрес прокси сервера
     :return: список словарей
     """
     try:
+        if proxy:
+            os.environ['https_proxy'] = os.environ['http_proxy'] = proxy
         jira_connection = JIRA(server=server, basic_auth=(user_login, password))
     except JIRAError as e:
-        raise JIRAError("Error occurred while trying to connect to jira server.")
+        raise JIRAError("Error occurred while trying to connect to jira server." + str(e))
     # 'key' - имя задачи (PROMEDWEB-XXXXX)
     # 'customfield_11983' - поле 'Действие при обновлении'
     # 'customfield_12501' - поле 'Шаблоны отчетов'
@@ -105,32 +105,18 @@ def get_data_dicts(jira_conf: dict) -> List[dict]:
     Получить список задач с серверов Jira
     :return: список словарей
     """
-    jql_query = f"project in ({jira_conf['projects']}) AND status in ({jira_conf['status']}) AND fixVersion in ({jira_conf['versions']}) AND component in (Отчеты, \"Печатные формы\") "
+    jql_query = f"project in ({jira_conf['projects']}) AND " \
+                f"status in ({jira_conf['status']}) " \
+                f"AND fixVersion in ({jira_conf['versions']}) " \
+                f"AND component in (Отчеты, \"Печатные формы\") "
 
     return jira_issues(
         server=jira_conf["server"],
         user_login=jira_conf["login"],
         password=jira_conf["password"],
         max_result=jira_conf["maxResult"],
-        jql=jql_query,
+        proxy=jira_conf["proxy"],
+        jql=jql_query
     )
-
-
-def get_data_lists(jira_conf) -> List[list]:
-    """
-    Получить список задач с серверов Jira
-    :return: список списков строк
-    """
-    jql_query = f"project in ({jira_conf['projects']}) AND status in ({jira_conf['status']}) AND fixVersion in ({jira_conf['versions']}) AND component in (Отчеты, \"Печатные формы\")"
-
-    issues = jira_issues(
-        server=jira_conf["server"],
-        user_login=jira_conf["login"],
-        password=jira_conf["password"],
-        max_result=jira_conf["maxResult"],
-        jql=jql_query,
-    )
-
-    return [list(issue.values()) for issue in issues]
 
 

@@ -5,12 +5,13 @@
     "password": "{Qv:@$(kp:",
     "projects": "PROMEDWEB",
     "status": "\"Waiting for release\"",
-    "versions": "prmd.7.18.0",
-    "maxResult": "100"
+    "versions": "prmd.7.19.0-rc",
+    "maxResult": "100",
+    "proxy" : "192.168.36.31:3128"
   },
   "repository": {
-      "report_ms": "E:\\RTMIS\\report_ms_full_clone",
-      "report_pg": "E:\\RTMIS\\report_pg_full_clone",
+      "report_ms": "E:\\RTMIS\\report_ms_19rc",
+      "report_pg": "E:\\RTMIS\\report_pg_19rc",
       "target_branch": "master"
    },
   "csv_dir": "csv"

@@ -2,6 +2,7 @@ from logger import *
 
 TARGET_BRANCH = load_json("app_conf.json")["repository"]["target_branch"]
 
+
 class JiraTask:
     """
     Задача из Jira
@@ -39,18 +40,18 @@ class JiraTask:
         set_of_changed_templates = set(changed_templates)
         set_of_self_templates = set(self._templates)
 
-        # if len(set_of_changed_templates) != len(changed_templates):
-        #     has_errors = True
-        #     self._logger.error("Changed templates contain duplicate")
-        #
-        # if len(set_of_self_templates) != len(self._templates):
-        #     has_errors = True
-        #     self._logger.error("Self templates contain duplicate")
+        if len(set_of_changed_templates) != len(changed_templates):
+            has_errors = True
+            self._logger.error("Changed templates contain duplicate.")
+
+        if len(set_of_self_templates) != len(self._templates):
+            has_errors = True
+            self._logger.error("Self templates contain duplicate.")
 
         if set_difference := set_of_changed_templates - set_of_self_templates:
             has_errors = True
             self._logger.error(
-                f"Target branch has changes in unlisted files: {', '.join(set_difference)}."
+                f"Branch has changes in unlisted files: {', '.join(set_difference)}."
             )
 
         if set_difference := set_of_self_templates - set_of_changed_templates:
@@ -59,8 +60,15 @@ class JiraTask:
                 f"Listed templates must have changes, but they don't: {', '.join(set_difference)}."
             )
 
+        for branch in self._branches:
+            # Проверка, что в целевой ветки не изменялись файлы шаблонов из self._templates
+            set_of_target_branch_changes = set(branch.get_target_branch_changes(TARGET_BRANCH))
+            if set_intersection := set_of_target_branch_changes & set_of_self_templates:
+                has_errors = True
+                self._logger.error(f"Target branch '{TARGET_BRANCH}' contains changes in files, that can't be changed: {', '.join(set_intersection)}.")
+
         if has_errors:
-            raise Exception(f"Errors occurs during git repository check. See task {self._name} for more.")
+            raise Exception(f"Errors occurred while git repository check. See task {self._name} for more.")
 
         return True
 

@@ -5,3 +5,4 @@ __pycache__
 /logs/
 /csv/
 /tests/logs/
+/old_csv/

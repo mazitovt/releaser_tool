@@ -40,6 +40,7 @@ class RepositoryBranch:
         try:
             return RepositoryBranch.REPOSITORIES[self._repository_name]["repo"]
         except Exception as e:
+            self._logger.error(str(e))
             raise Exception("No such RepositoryBranch in REPOSITORIES.")
 
     def is_contained_in(self, branches):
@@ -47,35 +48,55 @@ class RepositoryBranch:
         raise Exception("Not implemented")
         # TODO: need to implement method
 
-    def get_changed_templates(self, target_branch):
+    def get_target_branch_changes(self, to_branch):
+        """
+        Получить список файлов, у которых есть разница между целевой веткой или ближайшим предком своей и целевой веток.
+        :param target_branch:
+        :return:
+        """
+        from_commit = self.get_common_commit(to_branch)
+        to_commit = self.get_commit(to_branch)
+        return RepositoryBranch.get_changed_files(from_commit, to_commit)
 
+    def get_changed_templates(self, to_branch):
+        """
+        Получить список файлов, у которых есть разница между своей веткой или ближайшим предком своей и целевой веток.
+        :param target_branch:
+        :return:
+        """
+        from_commit = self.get_commit(self._name)
+        to_commit = self.get_common_commit(to_branch)
+        return RepositoryBranch.s_get_changed_templates(from_commit, to_commit)
+
+    def get_common_commit(self, to_branch):
+        common_commit_name = self._repo.git.merge_base([self._name, to_branch])
+        return self.get_commit(common_commit_name)
+
+    def get_commit(self, branch):
         try:
-            target_commit = self._repo.heads[target_branch].commit
-            self_commit = self._repo.heads[self._name].commit
+            return self._repo.commit(branch)
         except Exception as e:
             self._logger.error(str(e))
-            raise Exception(f"Repository doesn't contain branches {target_branch} or {self._name}.")
-        # a_path может отличаться от b_path наличием папки
-        # Вызов match_template_pattern нужен для удаления названия папки из пути файла
-        diff_file_names = []
-
-        # TODO: текущее поведение: если в репозитории измененный файл не подходит под шаблон, то бросает исключение
-        for diff in target_commit.diff(self_commit):
-            name = match_template_pattern(diff.a_path)
-            if not name:
-                raise Exception(
-                    "File name from git repository doesn't match template pattern."
-                )
-            diff_file_names.append(name)
-
-        return diff_file_names
+            raise Exception(f"Repository doesn't contain branch {branch}.")
 
     def merge_into(self, target_branch):
+        """
+        Слить ветку в target_branch.
+        :param target_branch:
+        :return:
+        """
+
+        merge_failed = False
         try:
             checkout_res = self._repo.git.checkout(target_branch)
             merge_res = self._repo.git.merge(self._name)
             self._logger.info('. '.join(merge_res.split('\n')))
         except Exception as e:
+            merge_failed = True
+            self._logger.error('. '.join(str(e).split('\n')))
+        if merge_failed:
+            res = self._repo.git.merge("--abort")
+            self._logger.info(f"Merge aborted.")
             raise Exception("Error occurred while merging.")
 
         # TODO: Код ниже (требует доработки) - альтернатива self._repo.git.merge(self._name)
@@ -97,3 +118,25 @@ class RepositoryBranch:
         # self_branch.checkout(force = True)
         #
         # # target_branch.commit = self_branch.commit
+
+    @staticmethod
+    def s_get_changed_templates(from_commit, to_commit):
+
+        # a_path может отличаться от b_path наличием папки
+        # Вызов match_template_pattern нужен для удаления названия папки из пути файла
+        diff_file_names = []
+
+        # TODO: текущее поведение: если в репозитории измененный файл не подходит под шаблон, то бросает исключение
+        for diff in to_commit.diff(from_commit):
+            name = match_template_pattern(diff.a_path)
+            if not name:
+                raise Exception(
+                    f"File name {diff.a_path} from git repository doesn't match template pattern."
+                )
+            diff_file_names.append(name)
+
+        return diff_file_names
+
+    @staticmethod
+    def get_changed_files(from_commit, to_commit):
+        return [diff.a_path for diff in to_commit.diff(from_commit)]

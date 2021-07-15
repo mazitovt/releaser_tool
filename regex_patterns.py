@@ -23,10 +23,9 @@ def match_branch_pattern(value):
     :param value: строка для проверки
     :return: словарь
     """
-    branch_pattern = (
-        #                                           1      2            3
-        r"https://git\.promedweb\.ru/rtmis/(report_(ms|pg))/-/tree/([A-Z]+-\d+)"
-    )
+    #                                                        1     2              3
+    branch_pattern = r"https://git\.promedweb\.ru/rtmis/(report_(ms|pg))/-/tree/([A-Z]+-\d+)"
+
     branch = regex.match(branch_pattern, value)
     if not branch:
         return None
