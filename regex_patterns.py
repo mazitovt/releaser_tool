@@ -4,10 +4,6 @@ import regex
 def match_task_name_pattern(value):
     """
     Проверяет соответствие названия задачи регулярному выражению.
-
-
-    :param value:
-    :return:
     """
     task_name_pattern = r"[A-Z]+-\d+"
     task_name = regex.match(task_name_pattern, value)
@@ -19,13 +15,11 @@ def match_task_name_pattern(value):
 def match_branch_pattern(value):
     """
     Проверяет соответствие ветки регулярному выражению и возвращает только имя ветки и репозитория.
-
-    :param value: строка для проверки
-    :return: словарь
     """
     #                                                        1     2              3
-    branch_pattern = r"https://git\.promedweb\.ru/rtmis/(report_(ms|pg))/-/tree/([A-Z]+-\d+)"
-
+    branch_pattern = (
+        r"https://git\.promedweb\.ru/rtmis/(report_(ms|pg))/-/tree/([A-Z]+-\d+)"
+    )
     branch = regex.match(branch_pattern, value)
     if not branch:
         return None
@@ -35,9 +29,6 @@ def match_branch_pattern(value):
 def match_template_pattern(value):
     """
     Проверяет соответствие отчета регулярному выражению и возвращает только имя шаблона.
-
-    :param value:
-    :return:
     """
     template_pattern = r"(?:^|\d{1,3}\/)([a-zA-Z_0-9-]+\.rptdesign)$"
     match = regex.match(template_pattern, value)
@@ -50,8 +41,6 @@ def match_template_pattern(value):
 def split_on_delimiters(input_string):
     """
     Разделяет строку по [;,\n\s]+ и очищает от пустых строк.
-    :param input_string: строка
-    :return: список строк
     """
     delimiters = regex.compile(r"[;,\n\s]+")
     items = delimiters.split(input_string)
